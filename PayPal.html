@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>付款页面</title>
+    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&components=buttons&currency=USD"></script>
+    <style>
+        /* 基础样式 */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 5vw;
+        }
+
+        select, input {
+            font-size: 18px;
+            padding: 12px;  /* 增大内边距，使输入框更大 */
+            width: 80%; /* 使用百分比，让宽度自适应 */
+            margin-bottom: 20px;
+            box-sizing: border-box; /* 包括内边距的宽度 */
+        }
+
+        #paypal-button-container {
+            margin-top: 20px;
+        }
+
+        #product-image {
+            width: 100%;
+            height: auto;
+            max-width: 1000px; /* 设置最大宽度，防止图片太大 */
+            object-fit: cover; /* 保证图片填充容器，且保持比例 */
+            margin-bottom: 20px;
+        }
+
+        /* 媒体查询：适应小屏幕设备 */
+        @media (max-width: 600px) {
+            select, input {
+                width: 90%; /* 小屏幕下，输入框宽度稍大 */
+            }
+
+            #product-image {
+                max-width: 300px; /* 小屏幕下，图片显示较小 */
+            }
+        }
+
+        /* 媒体查询：适应大屏幕设备 */
+        @media (min-width: 1200px) {
+            body {
+                padding: 2vw; /* 大屏幕上，调整页面的内边距 */
+            }
+
+            select, input {
+                font-size: 20px; /* 大屏幕字体增大 */
+                width: 50%; /* 增大输入框宽度 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>公益 救助</h2>
+    <img id="product-image" src="images/Img425702064.jpeg" alt="商品图片">
+    
+    <p>选择货币：</p>
+    <select id="currency">
+        <option value="USD">美国 - 美元 (USD)</option>
+        <option value="EUR">欧元 (EUR)</option>
+        <option value="GBP">英国 - 英镑 (GBP)</option>
+        <option value="JPY">日本 - 日元 (JPY)</option>
+        <option value="AUD">澳大利亚 - 澳元 (AUD)</option>
+        <option value="CAD">加拿大 - 加元 (CAD)</option>
+        <option value="CNY">中国 - 人民币 (CNY)</option>
+    </select>
+    
+    <p>捐赠金额：</p>
+    <input type="number" id="amount" placeholder="输入金额" min="10" step="10">
+    
+    <div id="paypal-button-container"></div>
+    
+    <script>
+        function loadPayPalButtons() {
+            let currency = document.getElementById('currency').value;
+            let script = document.createElement("script");
+            script.src = `https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&components=buttons&currency=${currency}`;
+            script.onload = renderPayPalButtons;
+            document.body.appendChild(script);
+        }
+
+        function renderPayPalButtons() {
+            document.getElementById('paypal-button-container').innerHTML = '';
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    let amount = parseFloat(document.getElementById('amount').value);
+                    if (isNaN(amount) || amount <= 0) {
+                        alert('请输入有效金额');
+                        return;
+                    }
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: amount.toFixed(2),
+                                currency_code: document.getElementById('currency').value
+                            },
+                            description: "您的商品名称",  // 商品描述
+                            items: [{
+                                name: "您的商品名称",
+                                unit_amount: {
+                                    currency_code: document.getElementById('currency').value,
+                                    value: amount.toFixed(2)
+                                },
+                                quantity: "1",
+                                category: "PHYSICAL_GOODS",  // 物理商品
+                                image_url: document.getElementById('product-image').src  // 商品图片 URL
+                            }]
+                        }]
+                    });
+                },
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        alert('付款成功！交易 ID: ' + details.id);
+                    });
+                }
+            }).render('#paypal-button-container');
+        }
+
+        document.getElementById('currency').addEventListener('change', loadPayPalButtons);
+        loadPayPalButtons();
+    </script>
+</body>
+</html>
